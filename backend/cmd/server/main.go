@@ -31,6 +31,14 @@ func main() {
 	router.Use(gin.Recovery())
 	router.Use(middleware.LoggingMiddleware())
 
+	// Configure trusted proxies to avoid Gin warning. Use the configured list from env
+	// If TRUSTED_PROXIES is not set, the config default includes loopback addresses only.
+	if err := router.SetTrustedProxies(cfg.TrustedProxies); err != nil {
+		log.WithError(err).Warn("Failed to set trusted proxies, falling back to Gin default (not recommended)")
+	} else {
+		log.WithField("trusted_proxies", cfg.TrustedProxies).Info("Configured trusted proxies")
+	}
+
 	// Configure CORS
 	corsConfig := cors.Config{
 		AllowOrigins:     cfg.CORSOrigins,
@@ -65,4 +73,3 @@ func main() {
 		log.WithError(err).Fatal("Failed to start server")
 	}
 }
-

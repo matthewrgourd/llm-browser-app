@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config holds the application configuration
@@ -14,6 +15,7 @@ type Config struct {
 	LogLevel        string
 	StaticDir       string
 	EnableProfiling bool
+	TrustedProxies  []string
 }
 
 // Load reads configuration from environment variables with sensible defaults
@@ -26,6 +28,7 @@ func Load() *Config {
 		LogLevel:        getEnv("LOG_LEVEL", "info"),
 		StaticDir:       getEnv("STATIC_DIR", "../frontend/dist"),
 		EnableProfiling: getEnvBool("ENABLE_PROFILING", false),
+		TrustedProxies:  getEnvSlice("TRUSTED_PROXIES", "127.0.0.1,::1"),
 	}
 }
 
@@ -47,3 +50,20 @@ func getEnvBool(key string, defaultValue bool) bool {
 	return defaultValue
 }
 
+// getEnvSlice reads a comma-separated env var and returns a slice of trimmed strings.
+// If the env var is empty, it returns the provided defaultCSV split into values.
+func getEnvSlice(key, defaultCSV string) []string {
+	val := os.Getenv(key)
+	if val == "" {
+		val = defaultCSV
+	}
+	parts := strings.Split(val, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
